@@ -22,7 +22,7 @@
 
     function deleteDataWithId(id) {
 
-      fetch(PRODUCT_API + "/" + id, {
+      fetch(PRODUCT_API + "/delete/" + id, {
         method: "DELETE"
       }).then((response) => {
         const index = fetchedData.findIndex(o => o.id === id);
