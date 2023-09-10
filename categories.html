@@ -19,7 +19,6 @@
 		let fetchedData = [];
 
 		function createCategoryNode(categoryObject) {
-			console.table(categoryObject);
       const categoryNodeTemplate = `
           <div class="accordion-item" id="categoryItem-${categoryObject._id}">
             <h2 class="accordion-header" id="categoryItemHeading-${categoryObject._id}">
@@ -269,6 +268,11 @@
 							<a href="warehouse.html" class="list-group-item list-group-item-action">
 								<span>
 									<i class="bi bi-houses"></i> Warehouse
+								</span>
+							</a>
+							<a href="product-allocations.html" class="list-group-item list-group-item-action">
+								<span>
+									<i class="bi bi-box-seam"></i> Product Allocations
 								</span>
 							</a>
 							<a href="" class="list-group-item list-group-item-action active disabled">

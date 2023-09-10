@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Document</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.5/font/bootstrap-icons.css">
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-MrcW6ZMFYlzcLA8Nl+NtUVF0sA7MsXsP1UyJoMp4YLEuNSfAP+JcXn/tWtIaxVXM"
+    crossorigin="anonymous"></script>
+
+  <script src="common.js"></script>
+
+  <script>
+    const WAREHOUSE_API = requestUrls.warehouses
+    let warehouses = [];
+		let relationships = {};
+
+		function createWarehouseComponent(warehouseObj, allocations) {
+			return `
+				<div class="accordion-item" id="warehouse-${warehouseObj.id}">
+            <h2 class="accordion-header" id="warehouseHeading-${warehouseObj.id}">
+              <div class="accordion-button"
+                      type="button"
+                      data-bs-toggle="collapse"
+                      data-bs-target="#warehouseDetails-${warehouseObj.id}"
+                      aria-expanded="true"
+                      aria-controls="#warehouseDetails-${warehouseObj.id}">
+											<code>#${warehouseObj.id}</code>
+											<strong>${warehouseObj.name}</strong>
+											 @
+											<span><i>${warehouseObj.province}</i></span>
+              </div>
+            </h2>
+						<div id="warehouseDetails-${warehouseObj.id}"
+								class="accordion-collapse collapse show"
+								aria-labelledby="warehouseDetails-${warehouseObj.id}">
+							<div class="accordion-body">
+								<div>
+									<table class="table table-hover">
+										<thead>
+											<tr>
+												<th></th>
+												<th>ID</th>
+												<th>Product Name</th>
+												<th>In stock</th>
+											</tr>
+										</thead>
+										<tbody>
+											${allocations.map((detailRow, index) => `
+                        <tr>
+													<td> <small><i>${ index + 1 }</i></small></td>
+													<td> ${ detailRow.productID } </td>
+                          <td>${ detailRow.title }</td>
+                          <td>${ detailRow.quantity }</td>
+												</tr>
+											`)}
+										</tbody>
+										<tfoot>
+											<tr>
+												<td/>
+												<td colspan="2"><strong>TOTAL:</strong></td>
+												<td><strong>${ allocations.reduce(
+													(acc, detailRow) => acc + detailRow.quantity,
+													0
+												)}</strong></td>
+											</tr>
+										</tfoot>
+									</table>
+								</div>
+							</div>
+            </div>
+          </div>
+			`;
+		}
+
+    function deleteDataWithId(id) {
+
+      fetch(WAREHOUSE_API + "/" + id, {
+        method: "DELETE"
+      }).then((response) => {
+        const index = fetchedData.findIndex(o => o.id === id);
+        fetchedData = fetchedData.filter((e) => e.id !== id);
+
+        // reflect on the table
+        const tableBody = document.querySelector("tbody");
+        tableBody.deleteRow(index);
+
+        showDeleteToast();
+      }).catch((err) => console.log(err));
+    }
+
+    function updateDataToTable() {
+
+			fetch(WAREHOUSE_API, {
+				method: "GET",
+				headers: {
+					"Content-Type": "application/json",
+					"Accept": "application/json"
+				}
+			}).then(response => response.json())
+			.then(jsonData => {
+				warehouses = jsonData;
+				console.log(warehouses)
+
+				// reflect on the selectors
+				let sourceSelector = document.getElementById("form-selector-source-warehouse")
+				let destinationSelector = document.getElementById("form-selector-destination-warehouse")
+
+				warehouses.forEach(warehouse => {
+					const renderedOption = `
+            <option value="${warehouse.id}">${warehouse.name} @ ${warehouse.province} (Size: ${warehouse.volume})</option>
+					`;
+					sourceSelector.innerHTML += renderedOption;
+					destinationSelector.innerHTML += renderedOption;
+				})
+			})
+
+      fetch(
+          WAREHOUSE_API + "/inventory/1", {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+              "Accept": "application/json"
+            }
+          }
+      ).then(response => response.json())
+			.then(resultRows => {
+
+				let relationshipsMap = {}
+
+				for (const resultRow of resultRows) {
+					if (!(resultRow.warehouseID in relationshipsMap)) {
+						relationshipsMap[resultRow.warehouseID] = [];
+					}
+					relationshipsMap[resultRow.warehouseID].push(resultRow);
+				}
+
+				relationships = relationshipsMap
+			}).then(_ => {
+					const productAllocationsContainer = document.getElementById("productAllocationsContainer");
+					productAllocationsContainer.innerHTML = "";
+
+					for (const warehouseID in relationships) {
+            const warehouseInfo = warehouses[warehouseID];
+						const allocations = relationships[warehouseID];
+
+            productAllocationsContainer.innerHTML += createWarehouseComponent(warehouseInfo, allocations);
+          }
+			})
+
+
+      // const table = document.getElementById("table-warehouse");
+      // table.innerHTML = "";
+
+      // await fetchedData.forEach((val, i, arr) => {
+      //   const tr = document.createElement("tr");
+      //   tr.className = "data-index"
+      //   tr.setAttribute("data-bs-toggle", "modal");
+      //   tr.setAttribute("data-bs-target", "#staticBackdrop")
+      //   tr.innerHTML = `
+      //               <td>${val.id}</td>
+      //               <td>${val.name}</td>
+      //               <td>${val.province}</td>
+      //               <td>${val.city}</td>
+      //               <td>${val.district}</td>
+      //               <td>${val.volume}</td>
+      //   `;
+      //   tr.onclick = () => {
+      //     fillDataIntoForm(val)
+      //   }
+      //   table.appendChild(tr);
+
+      // });
+    }
+
+    function onSubmit() {
+
+      createRequest(
+				WAREHOUSE_API + "/move",
+				WAREHOUSE_API + "/move",
+        {
+          sourceWarehouseID: document.getElementById("form-selector-source-warehouse").value,
+					destinationWarehouseId: document.getElementById("form-selector-destination-warehouse").value,
+					productId: parseInt(getFormField("productId").value),
+					quantity: parseInt(getFormField("quantity").value)
+        },
+        jsonResponse => {
+          console.log(jsonResponse);
+          updateDataToTable();
+          showSuccessToast();
+        }
+      );
+    }
+
+    window.onload = updateDataToTable;
+  </script>
+
+</head>
+
+<body>
+
+  <!-- popup messages -->
+  <div style="position: absolute">
+
+    <!-- deleted a row -->
+
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+      <div id="toast-delete" class="toast hide align-items-center text-white bg-secondary border-1" role="alert"
+        aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+          <div class="toast-body">
+            Warehouse removed successfully
+          </div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+            aria-label="Close"></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+      <div id="toast-success" class="toast hide align-items-center text-white bg-success border-1" role="alert"
+        aria-live="assertive" aria-atomic="true">
+        <div class="d-flex">
+          <div class="toast-body">
+            Your request to create / edit has been done successfully
+          </div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"
+            aria-label="Close"></button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="container-fluid">
+    <div class="row">
+
+      <!-- side bar -->
+
+      <div class="col-md-3">
+        <div class="sidebar py-5">
+          <h3>Management</h3>
+          <div class="my-4">
+						<h4>Admin's features</h4>
+						<div class="list-group" id="list-group-admin">
+							<a href="warehouse.html" class="list-group-item list-group-item-action">
+								<span>
+									<i class="bi bi-houses"></i> Warehouse
+								</span>
+							</a>
+							<a href="product-allocations.html" class="list-group-item list-group-item-action disabled active">
+								<span>
+									<i class="bi bi-box-seam"></i> Product Allocations
+								</span>
+							</a>
+							<a href="categories.html" class="list-group-item list-group-item-action">
+								<span>
+									<i class="bi bi-list-nested"></i> Categories
+								</span>
+							</a>
+							<a href="products-admin.html" class="list-group-item list-group-item-action">
+                <span>
+                  <i class="bi bi-laptop"></i> Products
+                </span>
+              </a>
+						</div>
+					</div>
+
+        </div>
+      </div>
+
+      <!-- main content -->
+
+      <div class="col-md-9 p-4">
+        <div class="main-content">
+          <h3>Product Allocations</h3>
+
+          <!-- toolkit / buttons  -->
+          <div class="container p-0 mx-0 w-100 mw-100">
+            <div class="card mx-0 my-4 w-100 mw-100">
+              <div class="card-body">
+                <button type="button" class="btn btn-outline-primary" data-bs-toggle="modal" data-bs-target="#staticBackdrop" onclick="clearForm()">
+                  <i class="bi bi-database-add"></i> Create a warehouse order
+                </button>
+              </div>
+            </div>
+          </div>
+
+
+          <!-- data table -->
+          <div class="border-1 accordion" id="productAllocationsContainer">
+
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+    aria-labelledby="staticBackdropLabel" aria-hidden="true">
+
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content">
+        <form>
+          <div class="modal-header">
+            <h5 class="modal-title" id="staticBackdropLabel">
+              <i class="bi bi-pencil-square"></i> Create a Warehouse Order
+            </h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+
+            <div class="mb-3" id="sourceWarehouseInputContainer">
+              <label for="form-input-email" class="-lformabel">Source Warehouse</label>
+              <select class="form-select" id="form-selector-source-warehouse" aria-label="Default select example">
+								<option selected>Choose your source warehouse...</option>
+							</select>
+            </div>
+
+						<div class="mb-3">
+              <label for="form-input-email" class="-lformabel">Destination Warehouse</label>
+              <select class="form-select" id="form-selector-destination-warehouse" aria-label="Default select example">
+								<option selected>Choose your destination warehouse...</option>
+							</select>
+            </div>
+
+						<div class="mb-3">
+							<label for="form-input-province" class="-lformabel">Product ID:</label>
+							<input type="text" class="form-control" id="form-input-productId" name="province">
+						</div>
+						<div class="mb-3">
+							<label for="form-input-city" class="-lformabel">Quantity:</label>
+							<input type="text" class="form-control" id="form-input-quantity" name="city">
+						</div>
+
+          </div>
+          <div class="modal-footer">
+						<button type="button" class="btn" id="form-delete" data-bs-dismiss="modal" hidden>
+              <i class="bi bi-trash"></i> Delete
+            </button>
+            <button type="button" id="form-submit" onclick="onSubmit()" data-bs-dismiss="modal" class="btn btn-primary">Execute Order</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </div>
+
+
+</body>
+
+</html>
