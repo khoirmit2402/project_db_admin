@@ -94,9 +94,13 @@ function getFormField(fieldName) {
 function createRequest(requestUrl, targetUrl, requestBody, successCallback) {
 	// create new
 	const isCreation = document.getElementById("form-delete").hidden;
-	let destinationUrl = targetUrl
-	if (!isCreation && !targetUrl) {
-		destinationUrl = requestUrl + "/" + getFormField("id").innerText;
+	let destinationUrl = "";
+
+
+	if (isCreation) {
+		destinationUrl = requestUrl
+	} else {
+		destinationUrl = (targetUrl) ? targetUrl : requestUrl + "/" + getFormField("id").innerText
 	}
 
 	fetch(destinationUrl, {
