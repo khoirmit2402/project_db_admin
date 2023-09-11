@@ -94,6 +94,7 @@
           const selectedItem = document.querySelector(`#form-select-category option[value="${val.category}"]`);
           console.log(selectedItem);
           selectedItem.selected = true;
+          reloadAttributes();
         }
         table.appendChild(tr);
 
@@ -123,6 +124,24 @@
       );
     }
 
+    function reloadAttributes() {
+      const selectedCategory = document.querySelector("#form-select-category").value;
+      const matchedCategories = fetchedCategories.find(c => c._id === parseInt(selectedCategory));
+      console.log(matchedCategories);
+
+      let attributesContainer = document.querySelector("#product-attributes-container");
+
+      attributesContainer.innerHTML = "";
+
+      matchedCategories.attributes.forEach((val, i, arr) => {
+        attributesContainer.innerHTML += `
+          <div class="form-floating mb-3">
+            <input type="text" class="form-control input-attribute" data-attribute-id="${val._id}" id="form-input-attribute-${val._id}" placeholder="Enter Attribute">
+            <label for="form-input-attribute-${val._id}">${val.attributeName}</label>
+          </div>
+        `;
+      })
+    }
 
     window.onload = async () => {
       await fetchCategories();
@@ -182,11 +201,6 @@
               <a href="" class="list-group-item list-group-item-action active disabled">
                 <span>
                   <i class="bi bi-laptop"></i> Products
-                </span>
-              </a>
-              <a href="orders.html" class="list-group-item list-group-item-action">
-                <span>
-                  <i class="bi bi-clipboard-plus"></i> Orders
                 </span>
               </a>
             </div>
@@ -264,7 +278,7 @@
                 </div>
                 <div class="mb-3">
                   <label for="form-select-category" class="-lformabel">Category</label>
-                  <select name="form-select-category" id="form-select-category" class="form-select">
+                  <select name="form-select-category" id="form-select-category" class="form-select" onchange="reloadAttributes()">
 
                   </select>
                 </div>
@@ -274,17 +288,17 @@
                 </div>
               </div>
               <hr>
-              <div>
+              <div class="row g-3">
                 <h5>Size details</h5>
-                <div class="mb-3">
+                <div class="col-md-3">
                   <label for="form-input-district" class="-lformabel">Width:</label>
                   <input type="text" class="form-control" id="form-input-width">
                 </div>
-                <div class="mb-3">
+                <div class="col-md-3">
                   <label for="form-input-street" class="-lformabel">Length:</label>
                   <input type="text" class="form-control" id="form-input-length">
                 </div>
-                <div class="mb-3">
+                <div class="col-md-3">
                   <label for="form-input-number" class="-lformabel">Height:</label>
                   <input type="text" class="form-control" id="form-input-height">
                 </div>
@@ -297,9 +311,14 @@
                   <input type="text" class="form-control" id="form-input-inStock">
                 </div>
               </div>
+              <hr>
+              <div>
+                <h5>Product Attributes</h5>
+                <div id="product-attributes-container">
 
+                </div>
+              </div>
             </div>
-
           </div>
           <div class="modal-footer">
             <button type="button" class="btn" id="form-delete" data-bs-dismiss="modal">

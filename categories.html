@@ -120,6 +120,9 @@
 
 
 			let attributesContainer = document.getElementById("attributes");
+			let linkEditAttributes = document.getElementById("link-edit-attrs");
+			linkEditAttributes.setAttribute("href", "categories-attrs.html?category-id=" + node._id)
+
 			attributesContainer.innerHTML = ""
 		  for (const attribute of node.attributes) {
 				attributesContainer.innerHTML += `
@@ -345,7 +348,7 @@
             </div>
 						<hr>
             <div>
-              <h5>Categories Attributes</h5>
+              <span><h5 style="width: fit-content; display: inline">Categories Attributes</h5> <a href="" id="link-edit-attrs"><i class="bi bi-pencil-square"></i>Edit</a></span>
               <!-- <div class="attribute-toolkit">
 								<button>
 									<i class="bi bi-plus-circle"></i>
